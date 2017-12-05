@@ -38,32 +38,70 @@ knowledge of the CeCILL licence and that you accept its terms.
 #include "advection.hh"
 #include <cmath>
 
+namespace {
+
+  /** Evaluate the normalized vector field
+
+      \exception yl::Advection::AbnormalField in case of denormalized field
+
+      \exception yl::Field::UndefinedField if the point is out of bounds for
+      the field
+   */
+const Point3df
+evaluate_normalized_field(const yl::VectorField3d& vector_field,
+                          const Point3df& point)
+{
+  Point3df field_value;
+  vector_field.evaluate(point, field_value);
+  // Normalize the field, stop if too small or infinite or NaN.
+  const float norm = field_value.norm();
+  if(!std::isnormal(norm))
+    throw yl::Advection::AbnormalField();
+  field_value *= 1 / norm;
+  return field_value;
+}
+
+} // end of anonymous namespace
+
 yl::Advection::Advection(const VectorField3d& advection_field)
   : m_vector_field(advection_field), m_verbose(0), m_max_iter(default_max_iter)
 {
 }
 
-yl::ConstantStepAdvection::
-ConstantStepAdvection(const yl::VectorField3d& advection_field,
-                      const float step)
+yl::ConstantStepEulerAdvection::
+ConstantStepEulerAdvection(const yl::VectorField3d& advection_field,
+                           const float step)
   : Advection(advection_field), m_step(step)
 {
 }
 
-void yl::ConstantStepAdvection::
-move_one_step(Point3df& point,
-              const Point3df& local_field) const
+void yl::ConstantStepEulerAdvection::
+move_one_step(Point3df& point) const
 {
-  float gx = local_field[0], gy = local_field[1], gz = local_field[2];
-  // Normalize the field, stop if too small or infinite or NaN.
-  const float gn = std::sqrt(gx*gx + gy*gy + gz*gz);
-  if(!std::isnormal(gn))
-    throw yl::Advection::AbnormalField();
-  gx /= gn; gy /= gn; gz /= gn;
+  const Point3df vec = evaluate_normalized_field(vector_field(), point);
+  point += m_step * vec;
+}
 
-  point[0] += m_step * gx;
-  point[1] += m_step * gy;
-  point[2] += m_step * gz;
+yl::ConstantStepRK4Advection::
+ConstantStepRK4Advection(const yl::VectorField3d& advection_field,
+                         const float step)
+  : Advection(advection_field), m_step(step)
+{
+}
+
+void yl::ConstantStepRK4Advection::
+move_one_step(Point3df& point) const
+{
+  const yl::VectorField3d& field = vector_field();
+
+  const Point3df k1 = evaluate_normalized_field(field, point);
+  const Point3df k2 = evaluate_normalized_field(field,
+                                                point + 0.5f * m_step * k1);
+  const Point3df k3 = evaluate_normalized_field(field,
+                                                point + 0.5f * m_step * k2);
+  const Point3df k4 = evaluate_normalized_field(field,
+                                                point + m_step * k3);
+  point += (m_step / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
 }
 
 #include "advection.tcc"

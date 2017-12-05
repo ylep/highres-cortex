@@ -107,30 +107,34 @@ public:
     m_verbose = verbosity;
   };
 
+  const yl::VectorField3d& vector_field() const {
+    return m_vector_field;
+  };
+
   /** Thrown by move_one_step() to abort the advection */
   class AbnormalField
   {
   };
 
 private:
-  virtual void move_one_step(Point3df& point,
-                             const Point3df& local_field) const = 0;
+  virtual void move_one_step(Point3df& point) const = 0;
 
   const yl::VectorField3d& m_vector_field;
   int m_verbose;
   unsigned int m_max_iter;
 };
 
-/** Forward advection using a constant step size
+/** Forward advection using a constant step size (Euler's method)
 
     The step size can be negative, in which case the advection is done in the
     opposite direction.
  */
-class ConstantStepAdvection : public Advection
+class ConstantStepEulerAdvection : public Advection
 {
 public:
-  ConstantStepAdvection(const yl::VectorField3d& advection_field, float step);
-  virtual ~ConstantStepAdvection() {};
+  ConstantStepEulerAdvection(
+    const yl::VectorField3d& advection_field, float step);
+  virtual ~ConstantStepEulerAdvection() {};
 
   /** Change the step length */
   void set_step(float step)
@@ -139,11 +143,39 @@ public:
   };
 
 private:
-  virtual void move_one_step(Point3df& point,
-                             const Point3df& local_field) const;
+  virtual void move_one_step(Point3df& point) const;
 
   float m_step;
 };
+
+/** Forward advection using a constant step size (RK4 method)
+
+    The step size can be negative, in which case the advection is done in the
+    opposite direction.
+
+    This advection algorithm uses the Runge-Kutta explicit fourth-order method.
+ */
+class ConstantStepRK4Advection : public Advection
+{
+public:
+  ConstantStepRK4Advection(
+    const yl::VectorField3d& advection_field, float step);
+  virtual ~ConstantStepRK4Advection() {};
+
+  /** Change the step length */
+  void set_step(float step)
+  {
+    m_step = step;
+  };
+
+private:
+  virtual void move_one_step(Point3df& point) const;
+
+  float m_step;
+};
+
+/** Default advection class */
+typedef  ConstantStepEulerAdvection ConstantStepAdvection;
 
 } // namespace yl
 

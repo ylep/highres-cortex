@@ -80,21 +80,8 @@ visitor_advection(TVisitor& visitor,
     visitor.visit(point);
 
     // Move along the field
-    Point3df local_field;
     try {
-      m_vector_field.evaluate(point, local_field);
-    } catch(const Field::UndefinedField&) {
-      if(m_verbose >= 1) {
-        clog << "  advection aborted after " << iter
-             << " iterations: vector field is undefined at " << point << endl;
-      }
-
-      visitor.abort();
-      return false;
-    }
-
-    try {
-      move_one_step(point, local_field);
+      move_one_step(point);
     } catch(const AbnormalField&) {
       if(m_verbose >= 1) {
         clog << "  advection aborted after " << iter
@@ -102,7 +89,13 @@ visitor_advection(TVisitor& visitor,
                 " (too small, infinite, or NaN) at "
              << point << endl;
       }
-
+      visitor.abort();
+      return false;
+    } catch(const Field::UndefinedField&) {
+      if(m_verbose >= 1) {
+        clog << "  advection aborted after " << iter
+             << " iterations: vector field is undefined at " << point << endl;
+      }
       visitor.abort();
       return false;
     }
