@@ -736,6 +736,17 @@ advect_value<int16_t>(
              const int verbosity);
 
 template
+VolumeRef<int32_t>
+advect_value<int32_t>(
+             const VolumeRef<int16_t>& seeds,
+             const yl::ScalarField& domain,
+             const yl::VectorField3d& advection_field,
+             const VolumeRef<int32_t>& values,
+             const float max_advection_distance,
+             const float step_size,
+             const int verbosity);
+
+template
 VolumeRef<float>
 advect_value<float>(
              const VolumeRef<int16_t>& seeds,

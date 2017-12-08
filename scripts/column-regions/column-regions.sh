@@ -89,6 +89,27 @@ ylPropagateAlongField --verbose \
     --target-label 100000000 \
     --output heat_white_labels_on_CSF.nii.gz
 
+AimsThreshold -b --fg 1 -m be -t 25 -u 175 \
+    -i ../classif_with_outer_boundaries.nii.gz \
+    -o domain.nii.gz
+ylAdvectValues --verbose \
+    --grad-field ../heat/heat.nii.gz \
+    --seed-values CSF_labelled_interface.nii \
+    --domain domain.nii.gz \
+    --domain-type boolean \
+    --seeds white_labelled_interface.nii \
+    --step -0.05 \
+    --output-values heat_CSF_labels_on_white_AV.nii.gz
+ylAdvectValues --verbose \
+    --grad-field ../heat/heat.nii.gz \
+    --seed-values white_labelled_interface.nii \
+    --domain domain.nii.gz \
+    --domain-type boolean \
+    --seeds CSF_labelled_interface.nii \
+    --step 0.05 \
+    --output-values heat_white_labels_on_CSF_AV.nii.gz
+
+
 python "$(dirname -- "$0")"/get_exchanged_propvol.py  # -> exchanged_propvol.nii.gz
 
 # Why is the previous step necessary?

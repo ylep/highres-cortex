@@ -96,6 +96,7 @@ AdvectValuesProcess::AdvectValuesProcess()
   : Process(), step_size(0.03f), max_advection_distance(6.f)
 {
   registerProcessType( "Volume", "S16", &AdvectValuesProcess::doit<int16_t> );
+  registerProcessType( "Volume", "S32", &AdvectValuesProcess::doit<int32_t> );
   registerProcessType( "Volume", "FLOAT", &AdvectValuesProcess::doit<float> );
 }
 
